@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Work Report Manager - Kaam Ka Hisaab</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --secondary: #06b6d4;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --bg: #f8fafc;
+            --card: #ffffff;
+            --text: #1e293b;
+            --text-light: #64748b;
+            --border: #e2e8f0;
+            --shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -2px rgba(0,0,0,0.1);
+            --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -4px rgba(0,0,0,0.1);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+        }
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 20px;
+            margin-bottom: 30px;
+            box-shadow: var(--shadow-lg);
+            position: relative;
+            overflow: hidden;
+        }
+        .header::before {
+            content: '';
+            position: absolute;
+            top: -50%; right: -10%;
+            width: 300px; height: 300px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 50%;
+        }
+        .header h1 { font-size: 2rem; font-weight: 700; }
+        .header p { opacity: 0.9; margin-top: 5px; font-size: 0.95rem; }
+        .header-stats {
+            display: flex; gap: 30px; margin-top: 20px;
+        }
+        .stat-box {
+            background: rgba(255,255,255,0.15);
+            padding: 12px 20px;
+            border-radius: 12px;
+            backdrop-filter: blur(10px);
+        }
+        .stat-box .num { font-size: 1.5rem; font-weight: 700; }
+        .stat-box .label { font-size: 0.8rem; opacity: 0.8; }
+
+        /* Layout */
+        .main-grid {
+            display: grid;
+            grid-template-columns: 380px 1fr;
+            gap: 25px;
+        }
+        @media (max-width: 900px) {
+            .main-grid { grid-template-columns: 1fr; }
+        }
+
+        /* Cards */
+        .card {
+            background: var(--card);
+            border-radius: 16px;
+            padding: 25px;
+            box-shadow: var(--shadow);
+            margin-bottom: 20px;
+        }
+        .card-title {
+            font-size: 1.1rem; font-weight: 600;
+            margin-bottom: 20px;
+            display: flex; align-items: center; gap: 10px;
+        }
+        .card-title i { color: var(--primary); }
+
+        /* Form */
+        .form-group { margin-bottom: 18px; }
+        .form-group label {
+            display: block; font-size: 0.85rem; font-weight: 500;
+            margin-bottom: 6px; color: var(--text-light);
+        }
+        .form-group label .required { color: var(--danger); }
+        input, textarea, select {
+            width: 100%; padding: 12px 15px;
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            font-family: 'Poppins', sans-serif;
+            font-size: 0.9rem;
+            transition: all 0.3s;
+            background: var(--card);
+        }
+        input:focus, textarea:focus, select:focus {
+            outline: none; border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(99,102,241,0.1);
+        }
+        textarea { resize: vertical; min-height: 120px; }
+        .btn {
+            padding: 12px 24px; border: none; border-radius: 10px;
+            font-family: 'Poppins', sans-serif; font-weight: 600;
+            cursor: pointer; transition: all 0.3s;
+            display: inline-flex; align-items: center; gap: 8px;
+            font-size: 0.9rem;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white; width: 100%; justify-content: center;
+        }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(99,102,241,0.3); }
+        .btn-success { background: var(--success); color: white; }
+        .btn-warning { background: var(--warning); color: white; }
+        .btn-danger { background: var(--danger); color: white; }
+        .btn-sm { padding: 8px 16px; font-size: 0.8rem; }
+
+        /* Filters */
+        .filter-row {
+            display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 20px;
+        }
+        .filter-chip {
+            padding: 8px 16px; border-radius: 20px;
+            border: 2px solid var(--border);
+            background: var(--card);
+            cursor: pointer; font-size: 0.85rem;
+            transition: all 0.3s; font-weight: 500;
+        }
+        .filter-chip:hover, .filter-chip.active {
+            border-color: var(--primary);
+            background: rgba(99,102,241,0.1);
+            color: var(--primary);
+        }
+        .date-inputs {
+            display: flex; gap: 10px; align-items: center;
+        }
+        .date-inputs input { width: 140px; }
+
+        /* Entries */
+        .entry-card {
+            background: var(--card);
+            border-radius: 14px;
+            padding: 20px;
+            margin-bottom: 15px;
+            border: 1px solid var(--border);
+            transition: all 0.3s;
+            position: relative;
+        }
+        .entry-card:hover {
+            box-shadow: var(--shadow-lg);
+            border-color: var(--primary);
+            transform: translateY(-2px);
+        }
+        .entry-header {
+            display: flex; justify-content: space-between; align-items: start;
+            margin-bottom: 12px;
+        }
+        .entry-date {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            padding: 6px 14px;
+            border-radius: 8px;
+            font-size: 0.8rem; font-weight: 600;
+        }
+        .entry-actions { display: flex; gap: 8px; }
+        .entry-actions button {
+            background: none; border: none; cursor: pointer;
+            padding: 6px; border-radius: 6px;
+            transition: all 0.3s; color: var(--text-light);
+        }
+        .entry-actions button:hover { background: var(--bg); color: var(--primary); }
+        .entry-actions button.delete:hover { color: var(--danger); background: #fef2f2; }
+        .entry-text { font-size: 0.92rem; line-height: 1.7; color: var(--text); }
+        .entry-employee {
+            display: inline-flex; align-items: center; gap: 6px;
+            font-size: 0.8rem; color: var(--text-light);
+            margin-top: 10px; padding: 4px 12px;
+            background: var(--bg); border-radius: 20px;
+        }
+
+        /* Keywords */
+        .keywords-section { margin-top: 12px; }
+        .keywords-label {
+            font-size: 0.75rem; font-weight: 600; color: var(--text-light);
+            text-transform: uppercase; letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+        .keyword-tag {
+            display: inline-block; padding: 4px 12px;
+            background: rgba(99,102,241,0.1);
+            color: var(--primary); border-radius: 20px;
+            font-size: 0.8rem; font-weight: 500;
+            margin: 3px; border: 1px solid rgba(99,102,241,0.2);
+        }
+        .keyword-tag.page { background: rgba(6,182,212,0.1); color: var(--secondary); border-color: rgba(6,182,212,0.2); }
+        .keyword-tag.action { background: rgba(16,185,129,0.1); color: var(--success); border-color: rgba(16,185,129,0.2); }
+
+        /* Summary View */
+        .summary-box {
+            background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);
+            border: 1px solid #86efac;
+            border-radius: 14px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .summary-title {
+            font-size: 1rem; font-weight: 600; color: #166534;
+            margin-bottom: 15px; display: flex; align-items: center; gap: 8px;
+        }
+        .summary-stats {
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px;
+        }
+        .summary-stat {
+            text-align: center; padding: 15px;
+            background: white; border-radius: 10px;
+        }
+        .summary-stat .big { font-size: 1.8rem; font-weight: 700; color: var(--primary); }
+        .summary-stat .small { font-size: 0.8rem; color: var(--text-light); }
+
+        /* Top Keywords */
+        .top-keywords {
+            display: flex; flex-wrap: wrap; gap: 8px;
+        }
+        .top-keyword {
+            padding: 8px 16px; background: white;
+            border-radius: 10px; border: 2px solid var(--border);
+            font-size: 0.85rem; font-weight: 500;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .top-keyword .count {
+            background: var(--primary); color: white;
+            padding: 2px 8px; border-radius: 10px;
+            font-size: 0.75rem;
+        }
+
+        /* Print Styles */
+        @media print {
+            .no-print { display: none !important; }
+            .entry-card { break-inside: avoid; page-break-inside: avoid; }
+            body { background: white; }
+            .container { max-width: 100%; padding: 10px; }
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center; padding: 50px 20px;
+        }
+        .empty-state i {
+            font-size: 4rem; color: var(--border);
+            margin-bottom: 20px;
+        }
+        .empty-state h3 { color: var(--text-light); margin-bottom: 10px; }
+        .empty-state p { color: var(--text-light); font-size: 0.9rem; }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .fade-in { animation: fadeIn 0.4s ease-out; }
+
+        /* Toast */
+        .toast {
+            position: fixed; bottom: 30px; right: 30px;
+            background: var(--text); color: white;
+            padding: 15px 25px; border-radius: 12px;
+            box-shadow: var(--shadow-lg);
+            display: flex; align-items: center; gap: 12px;
+            z-index: 1000;
+            transform: translateY(100px);
+            transition: transform 0.3s;
+        }
+        .toast.show { transform: translateY(0); }
+        .toast i { color: var(--success); }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.5);
+            display: none; justify-content: center; align-items: center;
+            z-index: 999;
+        }
+        .modal-overlay.show { display: flex; }
+        .modal {
+            background: white; border-radius: 20px;
+            padding: 30px; max-width: 500px; width: 90%;
+            box-shadow: var(--shadow-lg);
+        }
+        .modal h3 { margin-bottom: 20px; }
+        .modal-btns { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1><i class="fas fa-clipboard-list"></i> Work Report Manager</h1>
+            <p>Apna daily kaam track karo, report generate karo, PDF download karo!</p>
+            <div class="header-stats">
+                <div class="stat-box">
+                    <div class="num" id="totalEntries">0</div>
+                    <div class="label">Total Entries</div>
+                </div>
+                <div class="stat-box">
+                    <div class="num" id="thisMonthEntries">0</div>
+                    <div class="label">This Month</div>
+                </div>
+                <div class="stat-box">
+                    <div class="num" id="totalKeywords">0</div>
+                    <div class="label">Keywords</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="main-grid">
+            <!-- Left Panel - Add Entry -->
+            <div class="left-panel no-print">
+                <div class="card">
+                    <div class="card-title"><i class="fas fa-plus-circle"></i> Add Daily Work</div>
+                    <form id="workForm">
+                        <div class="form-group">
+                            <label>Employee Name <span class="required">*</span></label>
+                            <input type="text" id="employeeName" placeholder="e.g., Rahul Sharma" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Date <span class="required">*</span></label>
+                            <input type="date" id="workDate" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Work Description <span class="required">*</span></label>
+                            <textarea id="workDesc" placeholder="Example: Working on the TTI New CRMS, Update pages 'Bulk Upload Parties', 'Uploaded Parties', 'Add Comments' and Create pages 'Removed Parties', 'FAQ', 'Company Info Details Dropdown on Top Bar'." required></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Save Entry
+                        </button>
+                    </form>
+                </div>
+
+                <div class="card">
+                    <div class="card-title"><i class="fas fa-lightbulb"></i> Tips</div>
+                    <ul style="font-size: 0.85rem; color: var(--text-light); line-height: 2; padding-left: 20px;">
+                        <li>Page names in quotes like "Page Name" auto-detect hote hain</li>
+                        <li>Actions like Update, Create, Fix, Test auto-highlight hote hain</li>
+                        <li>Project names capital words se detect hote hain</li>
+                        <li>Filter se specific date range dekh sakte ho</li>
+                        <li>PDF print karne ke liye Ctrl+P / Print button</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Right Panel - Entries & Reports -->
+            <div class="right-panel">
+                <!-- Filters -->
+                <div class="card no-print">
+                    <div class="card-title"><i class="fas fa-filter"></i> Filter Reports</div>
+                    <div class="filter-row">
+                        <div class="filter-chip active" data-filter="all" onclick="setFilter('all')">All Time</div>
+                        <div class="filter-chip" data-filter="today" onclick="setFilter('today')">Today</div>
+                        <div class="filter-chip" data-filter="yesterday" onclick="setFilter('yesterday')">Yesterday</div>
+                        <div class="filter-chip" data-filter="week" onclick="setFilter('week')">This Week</div>
+                        <div class="filter-chip" data-filter="month" onclick="setFilter('month')">This Month</div>
+                    </div>
+                    <div class="date-inputs">
+                        <input type="date" id="fromDate">
+                        <span style="color: var(--text-light);">to</span>
+                        <input type="date" id="toDate">
+                        <button class="btn btn-sm btn-primary" onclick="setCustomFilter()">
+                            <i class="fas fa-search"></i> Go
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Summary Box -->
+                <div class="summary-box" id="summaryBox" style="display: none;">
+                    <div class="summary-title">
+                        <i class="fas fa-chart-pie"></i>
+                        <span id="summaryTitle">Report Summary</span>
+                    </div>
+                    <div class="summary-stats">
+                        <div class="summary-stat">
+                            <div class="big" id="sumDays">0</div>
+                            <div class="small">Days Worked</div>
+                        </div>
+                        <div class="summary-stat">
+                            <div class="big" id="sumEntries">0</div>
+                            <div class="small">Total Entries</div>
+                        </div>
+                        <div class="summary-stat">
+                            <div class="big" id="sumKeywords">0</div>
+                            <div class="small">Unique Keywords</div>
+                        </div>
+                    </div>
+                    <div style="margin-top: 15px;">
+                        <div class="keywords-label">Top Keywords (Kaam ke main points):</div>
+                        <div class="top-keywords" id="topKeywords"></div>
+                    </div>
+                </div>
+
+                <!-- Action Bar -->
+                <div class="card no-print" style="display: flex; justify-content: space-between; align-items: center;">
+                    <div style="font-weight: 600; color: var(--text-light);">
+                        <i class="fas fa-list"></i> <span id="showingCount">0</span> entries showing
+                    </div>
+                    <div style="display: flex; gap: 10px;">
+                        <button class="btn btn-sm btn-warning" onclick="generateSummary()">
+                            <i class="fas fa-magic"></i> Generate Summary
+                        </button>
+                        <button class="btn btn-sm btn-success" onclick="downloadPDF()">
+                            <i class="fas fa-file-pdf"></i> Download PDF
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Entries List -->
+                <div id="entriesList"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast" id="toast">
+        <i class="fas fa-check-circle"></i>
+        <span id="toastMsg">Entry saved!</span>
+    </div>
+
+    <!-- Delete Modal -->
+    <div class="modal-overlay" id="deleteModal">
+        <div class="modal">
+            <h3><i class="fas fa-exclamation-triangle" style="color: var(--warning);"></i> Delete Entry?</h3>
+            <p style="color: var(--text-light); margin-top: 10px;">Ye entry permanently delete ho jayegi. Kya aap sure hain?</p>
+            <div class="modal-btns">
+                <button class="btn btn-sm" style="background: var(--border);" onclick="closeModal()">Cancel</button>
+                <button class="btn btn-sm btn-danger" onclick="confirmDelete()">Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Data Store
+        let entries = JSON.parse(localStorage.getItem('workEntries')) || [];
+        let currentFilter = 'all';
+        let deleteId = null;
+        let customFrom = null;
+        let customTo = null;
+
+        // Initialize
+        document.getElementById('workDate').valueAsDate = new Date();
+        renderEntries();
+        updateStats();
+
+        // Form Submit
+        document.getElementById('workForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const entry = {
+                id: Date.now(),
+                employee: document.getElementById('employeeName').value.trim(),
+                date: document.getElementById('workDate').value,
+                description: document.getElementById('workDesc').value.trim(),
+                keywords: extractKeywords(document.getElementById('workDesc').value),
+                createdAt: new Date().toISOString()
+            };
+
+            entries.unshift(entry);
+            saveEntries();
+            renderEntries();
+            updateStats();
+
+            document.getElementById('workDesc').value = '';
+            showToast('Entry saved successfully! ✅');
+        });
+
+        // Extract Keywords
+        function extractKeywords(text) {
+            const keywords = [];
+
+            // Extract quoted text (page names, features)
+            const quoted = text.match(/"([^"]+)"/g);
+            if (quoted) {
+                quoted.forEach(q => keywords.push({
+                    text: q.replace(/"/g, ''),
+                    type: 'page'
+                }));
+            }
+
+            // Extract actions (Update, Create, Fix, Test, Working, etc.)
+            const actions = ['update', 'create', 'fix', 'test', 'working', 'develop', 'design', 'implement', 'debug', 'review', 'deploy', 'migrate', 'integrate', 'optimize', 'refactor'];
+            actions.forEach(action => {
+                const regex = new RegExp(`\b${action}\w*\b`, 'gi');
+                const matches = text.match(regex);
+                if (matches) {
+                    matches.forEach(m => {
+                        if (!keywords.find(k => k.text.toLowerCase() === m.toLowerCase())) {
+                            keywords.push({ text: m, type: 'action' });
+                        }
+                    });
+                }
+            });
+
+            // Extract project names (ALL CAPS or Title Case words before common words)
+            const projectPatterns = [
+                /([A-Z]{2,}(?:\s+[A-Z][a-zA-Z]*)+)/g,  // TTI New CRMS
+                /([A-Z][a-zA-Z]*\s+(?:CRM|ERP|CMS|API|UI|UX|DB|APP|WEB|PORTAL|SYSTEM|MODULE|DASHBOARD))/gi
+            ];
+
+            projectPatterns.forEach(pattern => {
+                let match;
+                while ((match = pattern.exec(text)) !== null) {
+                    const word = match[1];
+                    if (word.length > 2 && !keywords.find(k => k.text === word)) {
+                        keywords.push({ text: word, type: 'project' });
+                    }
+                }
+            });
+
+            // Extract technical terms
+            const techTerms = ['API', 'Database', 'Frontend', 'Backend', 'Server', 'Bug', 'Feature', 'Module', 'Integration', 'Responsive', 'Dropdown', 'Modal', 'Form', 'Table', 'Chart', 'Dashboard', 'Login', 'Logout', 'Authentication', 'Authorization'];
+            techTerms.forEach(term => {
+                const regex = new RegExp(`\b${term}\b`, 'gi');
+                if (regex.test(text) && !keywords.find(k => k.text.toLowerCase() === term.toLowerCase())) {
+                    keywords.push({ text: term, type: 'page' });
+                }
+            });
+
+            return keywords;
+        }
+
+        // Save to LocalStorage
+        function saveEntries() {
+            localStorage.setItem('workEntries', JSON.stringify(entries));
+        }
+
+        // Render Entries
+        function renderEntries() {
+            const list = document.getElementById('entriesList');
+            const filtered = getFilteredEntries();
+
+            document.getElementById('showingCount').textContent = filtered.length;
+
+            if (filtered.length === 0) {
+                list.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-clipboard"></i>
+                        <h3>Koi entries nahi hain</h3>
+                        <p>Left side se apna pehla work entry add karo!</p>
+                    </div>
+                `;
+                return;
+            }
+
+            list.innerHTML = filtered.map(entry => `
+                <div class="entry-card fade-in">
+                    <div class="entry-header">
+                        <div>
+                            <span class="entry-date">${formatDate(entry.date)}</span>
+                            <span class="entry-employee"><i class="fas fa-user"></i> ${escapeHtml(entry.employee)}</span>
+                        </div>
+                        <div class="entry-actions no-print">
+                            <button onclick="editEntry(${entry.id})"><i class="fas fa-edit"></i></button>
+                            <button class="delete" onclick="openDeleteModal(${entry.id})"><i class="fas fa-trash"></i></button>
+                        </div>
+                    </div>
+                    <div class="entry-text">${escapeHtml(entry.description)}</div>
+                    <div class="keywords-section">
+                        <div class="keywords-label">Auto-Detected Keywords:</div>
+                        ${entry.keywords.map(k => `<span class="keyword-tag ${k.type}">${escapeHtml(k.text)}</span>`).join('')}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Get Filtered Entries
+        function getFilteredEntries() {
+            const today = new Date();
+            today.setHours(0,0,0,0);
+
+            return entries.filter(entry => {
+                const entryDate = new Date(entry.date);
+                entryDate.setHours(0,0,0,0);
+
+                switch(currentFilter) {
+                    case 'today':
+                        return entryDate.getTime() === today.getTime();
+                    case 'yesterday':
+                        const yesterday = new Date(today);
+                        yesterday.setDate(yesterday.getDate() - 1);
+                        return entryDate.getTime() === yesterday.getTime();
+                    case 'week':
+                        const weekStart = new Date(today);
+                        weekStart.setDate(weekStart.getDate() - weekStart.getDay());
+                        return entryDate >= weekStart;
+                    case 'month':
+                        return entryDate.getMonth() === today.getMonth() && 
+                               entryDate.getFullYear() === today.getFullYear();
+                    case 'custom':
+                        if (customFrom && customTo) {
+                            const from = new Date(customFrom);
+                            const to = new Date(customTo);
+                            from.setHours(0,0,0,0);
+                            to.setHours(23,59,59,999);
+                            return entryDate >= from && entryDate <= to;
+                        }
+                        return true;
+                    default:
+                        return true;
+                }
+            });
+        }
+
+        // Set Filter
+        function setFilter(filter) {
+            currentFilter = filter;
+            customFrom = null;
+            customTo = null;
+
+            document.querySelectorAll('.filter-chip').forEach(chip => {
+                chip.classList.toggle('active', chip.dataset.filter === filter);
+            });
+
+            document.getElementById('summaryBox').style.display = 'none';
+            renderEntries();
+        }
+
+        // Custom Filter
+        function setCustomFilter() {
+            const from = document.getElementById('fromDate').value;
+            const to = document.getElementById('toDate').value;
+
+            if (!from || !to) {
+                showToast('Please select both dates! ⚠️');
+                return;
+            }
+
+            customFrom = from;
+            customTo = to;
+            currentFilter = 'custom';
+
+            document.querySelectorAll('.filter-chip').forEach(chip => chip.classList.remove('active'));
+            document.getElementById('summaryBox').style.display = 'none';
+            renderEntries();
+        }
+
+        // Generate Summary
+        function generateSummary() {
+            const filtered = getFilteredEntries();
+
+            if (filtered.length === 0) {
+                showToast('No entries to summarize! ⚠️');
+                return;
+            }
+
+            // Count unique days
+            const uniqueDays = new Set(filtered.map(e => e.date)).size;
+
+            // Aggregate all keywords
+            const keywordCounts = {};
+            filtered.forEach(entry => {
+                entry.keywords.forEach(k => {
+                    const key = k.text.toLowerCase();
+                    if (!keywordCounts[key]) {
+                        keywordCounts[key] = { text: k.text, count: 0, type: k.type };
+                    }
+                    keywordCounts[key].count++;
+                });
+            });
+
+            const sortedKeywords = Object.values(keywordCounts)
+                .sort((a, b) => b.count - a.count)
+                .slice(0, 15);
+
+            // Update summary box
+            document.getElementById('sumDays').textContent = uniqueDays;
+            document.getElementById('sumEntries').textContent = filtered.length;
+            document.getElementById('sumKeywords').textContent = sortedKeywords.length;
+
+            const filterLabels = {
+                'all': 'All Time Summary',
+                'today': "Today's Summary",
+                'yesterday': "Yesterday's Summary",
+                'week': 'This Week Summary',
+                'month': 'This Month Summary',
+                'custom': 'Custom Range Summary'
+            };
+            document.getElementById('summaryTitle').textContent = filterLabels[currentFilter] || 'Report Summary';
+
+            document.getElementById('topKeywords').innerHTML = sortedKeywords.map(k => 
+                `<div class="top-keyword">${escapeHtml(k.text)} <span class="count">${k.count}x</span></div>`
+            ).join('');
+
+            document.getElementById('summaryBox').style.display = 'block';
+            document.getElementById('summaryBox').scrollIntoView({ behavior: 'smooth' });
+
+            showToast('Summary generated! Check above 👆');
+        }
+
+        // Download PDF
+        function downloadPDF() {
+            if (getFilteredEntries().length === 0) {
+                showToast('No entries to print! ⚠️');
+                return;
+            }
+
+            // Auto-generate summary before print if not already
+            if (document.getElementById('summaryBox').style.display === 'none') {
+                generateSummary();
+            }
+
+            setTimeout(() => {
+                window.print();
+            }, 300);
+        }
+
+        // Edit Entry
+        function editEntry(id) {
+            const entry = entries.find(e => e.id === id);
+            if (!entry) return;
+
+            document.getElementById('employeeName').value = entry.employee;
+            document.getElementById('workDate').value = entry.date;
+            document.getElementById('workDesc').value = entry.description;
+
+            deleteId = id;
+            openDeleteModal(id); // We'll repurpose - actually let's just delete and re-add
+            // Better approach: remove old, let user submit new
+            entries = entries.filter(e => e.id !== id);
+            saveEntries();
+            renderEntries();
+            updateStats();
+
+            showToast('Entry loaded for editing! Modify and save ✅');
+            document.querySelector('.left-panel').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // Delete Functions
+        function openDeleteModal(id) {
+            deleteId = id;
+            document.getElementById('deleteModal').classList.add('show');
+        }
+
+        function closeModal() {
+            document.getElementById('deleteModal').classList.remove('show');
+            deleteId = null;
+        }
+
+        function confirmDelete() {
+            if (deleteId) {
+                entries = entries.filter(e => e.id !== deleteId);
+                saveEntries();
+                renderEntries();
+                updateStats();
+                showToast('Entry deleted! 🗑️');
+            }
+            closeModal();
+        }
+
+        // Update Stats
+        function updateStats() {
+            document.getElementById('totalEntries').textContent = entries.length;
+
+            const today = new Date();
+            const monthEntries = entries.filter(e => {
+                const d = new Date(e.date);
+                return d.getMonth() === today.getMonth() && d.getFullYear() === today.getFullYear();
+            });
+            document.getElementById('thisMonthEntries').textContent = monthEntries.length;
+
+            const allKeywords = new Set();
+            entries.forEach(e => e.keywords.forEach(k => allKeywords.add(k.text.toLowerCase())));
+            document.getElementById('totalKeywords').textContent = allKeywords.size;
+        }
+
+        // Utilities
+        function formatDate(dateStr) {
+            const date = new Date(dateStr);
+            const options = { day: 'numeric', month: 'short', year: 'numeric', weekday: 'short' };
+            return date.toLocaleDateString('en-IN', options);
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toastMsg').textContent = msg;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+
+        // Close modal on outside click
+        document.getElementById('deleteModal').addEventListener('click', function(e) {
+            if (e.target === this) closeModal();
+        });
+    </script>
+</body>
+</html>
